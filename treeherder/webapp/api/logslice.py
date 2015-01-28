@@ -37,8 +37,7 @@ class LogSliceView(viewsets.ViewSet):
         Receives a line range and job_id and returns those lines
         """
         job_id = request.QUERY_PARAMS.get("job_id")
-
-        log = jm.get_log_references(job_id)
+        log_name = request.QUERY_PARAMS.get("name", "builds-4h")
 
         handle = None
         gz_file = None
@@ -52,9 +51,14 @@ class LogSliceView(viewsets.ViewSet):
         if start_line >= end_line:
             return Response("end_line must be larger than start_line", 400)
 
-        if len(log) > 0:
+        # get only the log that matches the ``log_name``
+        logs = jm.get_log_references(job_id)
+        log = [log for log in logs if log["name"] == log_name]
+
+        if len(log):
+            log = log[0]
             try:
-                url = log[0].get("url")
+                url = log.get("url")
                 gz_file = filesystem.get(url)
 
                 if not gz_file:
