@@ -14,6 +14,7 @@ import urllib2
 import gzip
 import io
 import logging
+import json
 
 filesystem = cache.get_cache('filesystem')
 
@@ -38,6 +39,7 @@ class LogSliceView(viewsets.ViewSet):
         """
         job_id = request.QUERY_PARAMS.get("job_id")
         log_name = request.QUERY_PARAMS.get("name", "builds-4h")
+        format = request.QUERY_PARAMS.get("format", "text")
 
         handle = None
         gz_file = None
@@ -74,7 +76,10 @@ class LogSliceView(viewsets.ViewSet):
                     if i < start_line: continue
                     elif i >= end_line: break
 
-                    lines.append({"text": line, "index": i})
+                    if format == 'json':
+                        lines.append({"data": json.loads(line), "index": i})
+                    else:
+                        lines.append({"text": line, "index": i})
 
                 return Response(lines)
 
